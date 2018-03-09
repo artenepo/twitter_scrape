@@ -99,3 +99,10 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Docker stuff:
+Procfile
+docker-compose.yml
+
+# logs folder
+/logs
