@@ -1,0 +1,15 @@
+version: '3'
+
+
+services:
+  twitter_scrape:
+    build: ./twitter_scrape/
+    ports:
+      # expose service at port 5000 of host
+      - "0.0.0.0:5000:8888"
+    volumes:
+      - ../logs/twitter_scrape:/var/log/
+      - ../twitter_scrape:/mnt/src/
+    environment:
+      - DEBUG=0
+      - DEFAULT_PAGES_LIMIT=20
