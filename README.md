@@ -1,8 +1,8 @@
-TOC:
+#### Table of contents:
 
 * [Running in docker (local dev)](#running-in-docker-local-dev)
 * [Running test](#running-tests)
-* [API](#api)
+* [API usage](#api-usage)
 	* [Get tweets by a hashtag](#get-tweets-by-a-hashtag)
 	* [Get user tweets](#get-user-tweets)
 * [License](#license)
