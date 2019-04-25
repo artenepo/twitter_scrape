@@ -48,7 +48,7 @@ Procfile  README.md  main.py  scrapper.py	tests
 
 Running tests
 ------------------------------
-Only Python 3.6+ is supported
+Only Python 3.7+ is supported
 
 1. Set up environment
 
