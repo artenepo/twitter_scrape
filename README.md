@@ -1,13 +1,18 @@
+#Twitter Scrape
+
+Simple scrapping program that provides API for reading user tweets or tweets with a specific hashtag.  
+Developed as a home project for an interview.
+
 #### Table of contents:
 
-* [Running in docker (local dev)](#running-in-docker-local-dev)
+* [Running in docker](#running-in-docker)
 * [Running test](#running-tests)
 * [API usage](#api-usage)
 	* [Get tweets by a hashtag](#get-tweets-by-a-hashtag)
 	* [Get user tweets](#get-user-tweets)
 * [License](#license)
 
-Running in docker (local dev)
+Running in docker
 ------------------------------
 
 1. Install docker and [docker-compose](https://docs.docker.com/compose/install/) for your host OS
@@ -48,7 +53,8 @@ Procfile  README.md  main.py  scrapper.py	tests
 
 Running tests
 ------------------------------
-Only Python 3.7+ is supported
+Regression testing against running application.  
+Only Python 3.6+ is supported.
 
 1. Set up environment
 
@@ -57,7 +63,7 @@ $ export HOST=localhost
 $ export PORT=5000
 ```
 
-2. Go to `twitter_scrape/tests` folder and run `test_twitter_scrape.py`.
+2. Go to `tests` folder and run `test_twitter_scrape.py`.
 
 
 ```bash
@@ -79,36 +85,34 @@ API usage
 
 Get the list of tweets with the given hashtag.
 Optional parameters:
-    - pages_limit: integer, specifies the number of pages to scrape.
-    - wait: integer, specifies the custom amount of time to wait
-        between each request to the Twitter. The default is a random
-        number in the interval [0, 1.0]
+    - limit: integer, specifies the number of tweets to retriev=e
 
 **Example request:**
 
 ```bash
-curl -H "Accept: application/json" -H "Content-Type: application/json" -X GET http://localhost:5000/hashtags/Python?pages_limit=3&wait=0
-
+curl -H "Accept: application/json" -H "Content-Type: application/json" -X GET http://localhost:5000/hashtags/python?limit=15
 ```
 **Example response:**
 
 ```bash
-[{"account": {"fullname": "Raymond Hettinger",
-              "href": "/raymondh",
-              "id": 14159138},
-  "date": "12:57 PM - 7 Mar 2018",
-  "hashtags": ["#python"],
-  "likes": 169,
-  "replies": 13,
-  "retweets": 27,
-  "text": "Historically, bash filename pattern matching was known
-           as \"globbing\".  Hence, the #python module
-           called \"glob\".\n\n
-           >>> print(glob.glob('*.py')\n\n
-           If the function were being added today, it would probably
-           be called os.path.expand_wildcards('*.py') which would be
-           less arcane."},
-  ...
+[{
+    "account": {
+        "fullname": "Hugo de Vos",
+        "href": "/Ottotos",
+        "id": 1026921204
+    },
+    "date": "2019-04-23T06:02:00+07:00",
+    "hashtags": [
+        "#python"
+    ],
+    "likes": 11,
+    "replies": 0,
+    "retweets": 7,
+    "text": "I found a funny, unreadable, unpractical but working  way to
+            do conditional string formatting in #python ?
+            pic.twitter.com/RjUp4XQC4h"
+    },
+    ...
 ]
 ```
 
@@ -117,32 +121,33 @@ curl -H "Accept: application/json" -H "Content-Type: application/json" -X GET ht
 
 Get the list of tweets that user has on his feed in json format.
 Optional parameters:
-    - pages_limit: integer, specifies the number of pages to scrape.
-    - wait: integer, specifies the custom amount of time to wait
-        between each request to the Twitter. The default is a random
-        number in the interval [0, 1.0]
+    - limit: integer, specifies the number of tweets to retrieve
 
 **Example request:**
 
 ```bash
-curl -H "Accept: application/json" -H "Content-Type: application/json" -X GET http://localhost:5000/users/Twitter?pages_limit=3&wait=0
-
+curl -H "Accept: application/json" -H "Content-Type: application/json" -X GET http://localhost:5000/users/raymondh?limit=30
 ```
 
 **Example response:**
 
 ```bash
-[{"account": {"fullname": "Twitter",
-              "href": "/Twitter",
-              "id": 783214},
-  "date": "2:54 PM - 8 Mar 2018",
-  "hashtags": ["#InternationalWomensDay"],
-  "likes": 287,
-  "replies": 17,
-  "retweets": 70,
-  "text": "Powerful voices. Inspiring women.\n\n#InternationalWomensDay
-           https://twitter.com/i/moments/971870564246634496"},
-   ...
+[{
+    account: {
+        fullname: "Raymond Hettinger",
+        href: "/raymondh",
+        id: 14159138
+    },
+    date: "2019-04-06T10:52:00+07:00",
+    hashtags: [
+        "#Python"
+    ],
+    likes: 36,
+    replies: 0,
+    retweets: 14,
+    text: "How to do you usually write your #Python tests?"
+    },
+    ...
 ]
 ```
 
