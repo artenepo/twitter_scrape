@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-
-import logging
-from random import random
-import re
-import time
+from typing import AnyStr, Generator, List, Dict
 
 from bs4 import BeautifulSoup
 import requests
@@ -19,122 +14,46 @@ headers = {
                    'Chrome/64.0.3282.186 Safari/537.36'),
     'x-requested-with': 'XMLHttpRequest',
     'x-twitter-active-user': 'yes'
-    }
+}
 
 
+def get_tweet_stream(url: AnyStr) -> Generator:
+    """A generator that produces tweets"""
 
+    response = requests.get(url, headers=headers, params={'max_position': ''})
 
-def user_tweets(user, pages_limit=10, wait=None):
-    """A generator that produces tweets of a given user.
+    while True:
+        response.raise_for_status()
 
-    Optional argument wait sets the waiting time between the requests to mask
-    the work of the crapper; if it is the default None, the random.random
-    function will be used.
-    """
-
-    headers['referer'] = f'https://twitter.com/{user}'
-
-    url = (f'https://twitter.com/i/profiles/show/{user}/timeline/tweets?'
-           'include_available_features=1&include_entities=1'
-           '&reset_error_state=false')
-
-    r = requests.get(url, headers=headers, params={'max_position': ''})
-
-    while pages_limit:
-        json_response = r.json()
-        if not r.status_code == 200:
-            if r.status_code >= 400:
-                raise ValueError(f'{user} doesn\'t exist or unavailable.')
-
-            logger.error('\nURL: %s\nResponse: %r' % (r.url, json_response))
-            raise Exception(f'Unexpected status code received (%s)' %
-                            r.status_code)
-        try:
-            if json_response['min_position'] is None:
-                break
-        except KeyError:
-            logger.error('\nURL: %s\nResponse: %r' % (r.url, json_response))
+        json_response = response.json()
+        if json_response['min_position'] is None:
             break
 
         soup = BeautifulSoup(json_response['items_html'], 'html.parser')
-        containers = soup.find_all('li', {'data-item-type': 'tweet'},
-                                   class_='stream-item')
+        stream_items = soup.find_all('li', {'data-item-type': 'tweet'},
+                                     class_='stream-item')
 
-        last_tweet_id = containers[-1]['data-item-id']
-
-        for container in containers:
-            if container.find('div', class_='account'):
-                # not a tweet found
-                continue
-            yield parse_container(container)
-
-        pages_limit -= 1
-
-        if not json_response['has_more_items'] or not pages_limit:
-            break
-
-        if wait is None:
-            time.sleep(random())
-        elif wait != 0:
-            time.sleep(wait)
-
-        r = requests.get(url, headers=headers,
-                         params={'max_position': last_tweet_id})
-
-        logger.debug(f'max_position: {last_tweet_id}')
-
-
-def tweets_by_hashtag(tag, pages_limit=10, wait=None):
-    """A generator that produces tweets with a given hashtag.
-
-    Optional argument wait sets the waiting time between the requests to mask
-    the work of the crapper; if it is the default None, the random.random
-    function will be used.
-    """
-
-    url = ('https://twitter.com/i/search/timeline?'
-           'vertical=default&src=hash&composed_count=0&'
-           'include_available_features=1&include_entities=1&'
-           'include_new_items_bar=true&interval=240000')
-
-    headers['referer'] = f'https://twitter.com/hashtag/{tag}?src=hash'
-    hashtag = f'#{tag}'
-    r = requests.get(url, headers=headers, params={'q': hashtag,
-                                                   'latent_count': 0})
-    while pages_limit:
-        json_response = r.json()
-
-        if not r.status_code == 200:
-            logger.error('\nURL: %s\nResponse: %r' % (r.url, json_response))
-            raise Exception(f'Unexpected status code received (%s)' %
-                            r.status_code)
-
-        new_latent_count = json_response['new_latent_count']
-        max_position = json_response.get('max_position', '')
-
-        soup = BeautifulSoup(json_response['items_html'], 'html.parser')
-        containers = soup.find_all('li', {'data-item-type': 'tweet'},
-                                   class_='stream-item')
-        for container in containers:
-            if container.find('div', class_='account'):
-                # not a tweet found
+        for tweet in stream_items:
+            if tweet.find('div', class_='account'):
+                # skip account container
                 continue
 
-            yield parse_container(container)
+            yield parse_tweet_container(tweet)
 
-        pages_limit -= 1
-
-        if not json_response['has_more_items'] or not pages_limit:
+        if not json_response['has_more_items']:
             break
 
-        if wait is None:
-            time.sleep(random())
-        elif wait != 0:
-            time.sleep(wait)
+        last_tweet_id = stream_items[-1]['data-item-id']
 
-        r = requests.get(url, headers=headers,
-                         params={'latent_count': new_latent_count,
-                                 'min_position': max_position,
-                                 'q': hashtag})
+        response = requests.get(url, headers=headers,
+                                params={'max_position': last_tweet_id})
 
-        logger.debug(f'latent_count: {new_latent_count}')
+
+def get_tweets(url: AnyStr, limit: int) -> List[Dict]:
+    results = []
+    for tweet in get_tweet_stream(url):
+        results.append(tweet)
+        if len(results) == limit:
+            break
+
+    return results
