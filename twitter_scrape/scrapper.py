@@ -8,7 +8,7 @@ import time
 from bs4 import BeautifulSoup
 import requests
 
-logger = logging.getLogger(__name__)
+from parser import parse_tweet_container
 
 headers = {
     'accept': '*/*',
@@ -21,55 +21,7 @@ headers = {
     'x-twitter-active-user': 'yes'
     }
 
-url_pattern = re.compile('( http|http| ftp|ftp| https|https):\/\/')
 
-
-def url_repl(sre):
-    """Add space at the begging of the given URL.
-
-    Argument sre is the result of re.match() and re.search()"""
-
-    return ' ' + sre.group(0)
-
-
-def parse_container(container):
-    """Parse data and return a dictionary.
-
-    Argument container is an instance of bs4.element.Tag type.
-    https://www.crummy.com/software/BeautifulSoup/bs4/doc/#tag
-    """
-
-    date = container.find('a', class_='tweet-timestamp')['title']
-    actions = []
-    for i in container.find_all('span',
-                                {'data-tweet-stat-count': True},
-                                class_='ProfileTweet-actionCount'):
-        actions.append(int(i['data-tweet-stat-count']))
-
-    replies, retweets, likes, *_ = actions
-
-    text_container = container.find('div',
-                                    class_='js-tweet-text-container')
-    hashtags = []
-    for h in text_container.find_all('a', class_='twitter-hashtag'):
-        hashtags.append(h.text)
-
-    # raw_tweet_text usually does'nt contain a space before urls
-    raw_tweet_text = text_container.text.strip('\n')
-    tweet_text = re.sub(url_pattern, url_repl, raw_tweet_text)
-
-    user_full_name = container.find('strong', class_='fullname').text
-
-    user_data = container.find('a', class_='account-group')
-    user_id = int(user_data['data-user-id'])
-    user_href = user_data['href']
-
-    tweet = {'date': date, 'replies': replies, 'retweets': retweets,
-             'likes': likes, 'hashtags': hashtags,
-             'text': tweet_text,
-             'account': {'id': user_id, 'href': user_href,
-                         'fullname': user_full_name}}
-    return tweet
 
 
 def user_tweets(user, pages_limit=10, wait=None):
